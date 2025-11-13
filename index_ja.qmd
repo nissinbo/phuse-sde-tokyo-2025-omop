@@ -1,0 +1,512 @@
+---
+title: "OSS を用いた RWD 解析"
+subtitle: "OMOP CDM と 分析用 R パッケージの紹介"
+format:
+  clean-revealjs:
+    embed-resources: true
+footer: "PHUSE SDE Japan 2025"
+author:
+  - name: " "
+    affiliations: PHUSE Japan Open-source Technology Working Group
+date: 2025-12-05
+execute: 
+  echo: true
+output-file: index.html
+lang: ja
+---
+
+```{r}
+#| include: false
+options(tibble.print_min = 4)
+```
+
+## スライドはこちら
+
+:::: {.columns}
+
+::: {.column}
+English: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/en>
+
+![](images/slide_qr_english.png)
+:::
+
+::: {.column}
+Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
+
+![](images/slide_qr_japanese.png)
+:::
+
+::::
+
+# OMOP CDM 入門 {background-color="#2C3E50"}
+
+## OMOP CDMとは？
+  
+### **O**bservational **M**edical **O**utcomes **P**artnership **C**ommon **D**ata **M**odel
+  
+- 異なるRWDを統一的に解析するためのデータモデル
+- 共通スキーマと標準ボキャブラリによる標準化で、再現性を高める
+- OHDSIというコミュニティによって開発・発展
+
+![](https://www.ohdsi.org/wp-content/uploads/2015/02/h243-ohdsi-logo-with-text.png){fig-align="center"}
+
+[[OHDSI]{.button}](https://www.ohdsi.org/)
+
+::: {.callout-note}
+2025年には製薬業界でのOMOP活用を推進する[PHUSE Working Group](https://advance.hub.phuse.global/wiki/spaces/WEL/pages/96468993/)が発足
+:::
+
+## OMOP CDMの特徴
+
+- **利点: 異なるデータソースの比較研究が容易**
+  - 標準ボキャブラリによる用語統一
+  - 観察研究に必要な最小限のテーブルで設計
+- **課題: 変換工程の複雑さ**
+  - データソースごとにETLプロセスが必要
+  - 標準用語集へのマッピングの難易度
+
+## OMOP CDMの構造 (v5.4)
+
+![](https://ohdsi.github.io/CommonDataModel/images/cdm54.png){fig-align="center" width="80%"}
+
+- **Clinical data**: Person, Observation Period, Visit Occurrence, ...
+- **Health system**: Location, Care Site, Provider
+- **Vocabularies**: Concept, Vocabulary, Concept Relationship, ...
+
+[[OMOP CDM]{.button}](https://ohdsi.github.io/CommonDataModel/)
+
+## 主要テーブル: Person
+
+### 患者の基本情報と人口統計学的データ
+
+| フィールド | 説明 |
+|-----------|------|
+| person_id | 患者ID |
+| gender_concept_id | 性別 |
+| year_of_birth | 生年 |
+| race_concept_id | 人種 |
+| ethnicity_concept_id | 民族 |
+
+::: {.callout-tip}
+全ての臨床イベントは`person_id`で紐付けられる
+:::
+
+## 主要テーブル: Visit Occurrence
+
+### 医療機関への来院・入院情報
+
+| フィールド | 説明 |
+|-----------|------|
+| visit_occurrence_id | 来院の識別子 |
+| person_id | 患者ID |
+| visit_concept_id | 来院タイプ（入院/外来/救急） |
+| visit_start_date | 来院開始日 |
+| visit_end_date | 来院終了日 |
+  
+## 主要テーブル: Condition Occurrence
+  
+### 疾患・症状の診断情報
+
+| フィールド | 説明 |
+|-----------|------|
+| condition_occurrence_id | 診断の識別子 |
+| person_id | 患者ID |
+| condition_concept_id | 疾患の標準コンセプトID |
+| condition_start_date | 診断開始日 |
+| condition_type_concept_id | レコードの出所（EHR/レセプト） |
+
+## 主要テーブル: Drug Exposure
+  
+### 薬剤曝露の情報
+
+| フィールド | 説明 |
+|-----------|------|
+| drug_exposure_id | 薬剤曝露の識別子 |
+| person_id | 患者ID |
+| drug_concept_id | 薬剤の標準コンセプトID |
+| drug_exposure_start_date | 曝露開始日 |
+| drug_exposure_end_date | 曝露終了日 |
+
+## コードのマッピング
+
+OMOPでは、各種コードを標準コンセプトにマッピングすることが多い (必須ではない)
+  
+- **標準コンセプト**: SNOMED CT(疾患)やRxNorm(薬剤)などによって定義
+- **非標準コンセプト**: ICD10やLOINCなど、元データで使用されるコード
+- コンセプトは[ATHENA](https://athena.ohdsi.org/)というWebツールで検索可能
+
+![](https://ohdsi.github.io/TheBookOfOhdsi/images/StandardizedVocabularies/concept.png){fig-align="center"}
+
+::: {.callout-tip}
+## 例: 高血圧
+- **標準**: SNOMED 38341003
+- **非標準**: ICD10 I10, MeSH D006973
+:::
+
+# R で OMOP を解析する {background-color="#2C3E50"}
+
+## HADESとは
+
+### **H**ealth **A**nalytics **D**ata-to-**E**vidence **S**uite
+
+- OMOP CDMデータの分析に特化したRパッケージ群
+- 相互運用性が高い (HADESでそろえればうまく動く)
+- OHDSIとDARWIN EUという2つの組織を中心に開発が進んでいる
+
+![](https://ohdsi.github.io/Hades/images/banner.png)
+
+[[HADES]{.button}](https://ohdsi.github.io/Hades/index.html)
+[[OHDSI]{.button}](https://github.com/OHDSI/)
+[[DARWIN EU]{.button}](https://github.com/darwin-eu/)
+
+## HADESのパッケージリスト
+
+![](images/hades_packages.png)
+
+[[HADES Packages]{.button}](https://ohdsi.github.io/Hades/index.html)
+
+2025年12月現在、41個ものパッケージがHADESに登録されている！
+
+## HADESを用いたワークフローの一例
+
+### 一気通貫の分析フローが実現可能
+
+```{mermaid}
+%%| echo: false
+%%{init: {'theme':'base', 'themeVariables': {'fontSize':'30px'}}}%%
+graph LR
+    subgraph データ品質
+    B1[DataQualityDashboard]
+    B2[Achilles]
+    end
+    
+    subgraph コホート定義
+    C1[Capr]
+    C2[CohortGenerator]
+    end
+    
+    subgraph コホート診断
+    D1[CohortDiagnostics]
+    end
+    
+    subgraph 患者特性
+    E1[FeatureExtraction]
+    E2[Characterization]
+    end
+    
+    subgraph 推定
+    F1[CohortMethod]
+    F2[EvidenceSynthesis]
+    end
+    
+    A[OMOP Database] --> B1 & B2
+    A --> C1 & C2
+    C1 & C2 --> D1
+    D1 --> E1 & E2
+    E1 --> F1 & F2
+    
+    style データ品質 fill:#FCE4EC,stroke:#C2185B,color:#000
+    style コホート定義 fill:#E8F5E9,stroke:#388E3C,color:#000
+    style コホート診断 fill:#FFF3E0,stroke:#F57C00,color:#000
+    style 患者特性 fill:#F3E5F5,stroke:#7B1FA2,color:#000
+    style 推定 fill:#FFF9C4,stroke:#F9A825,color:#000
+    
+    style A fill:#E3F2FD,stroke:#1976D2,color:#000
+    style B1 fill:#FFEBEE,stroke:#C62828,color:#000
+    style B2 fill:#FFEBEE,stroke:#C62828,color:#000
+    style C1 fill:#C8E6C9,stroke:#2E7D32,color:#000
+    style C2 fill:#C8E6C9,stroke:#2E7D32,color:#000
+    style D1 fill:#FFE0B2,stroke:#EF6C00,color:#000
+    style E1 fill:#E1BEE7,stroke:#6A1B9A,color:#000
+    style E2 fill:#E1BEE7,stroke:#6A1B9A,color:#000
+    style F1 fill:#FFF59D,stroke:#F57F17,color:#000
+    style F2 fill:#FFF59D,stroke:#F57F17,color:#000
+```
+
+# 実際にやってみよう 😀 {background-color="#2C3E50"}
+
+## 準備
+
+R パッケージのインストール
+
+```{r}
+#| eval: false
+install.packages(c("duckdb", "here", "CDMConnector", "OmopSketch", 
+                   "PatientProfiles", "IncidencePrevalence", "CohortSurvival"))
+```
+
+サンプルデータのダウンロード
+
+```{r}
+library(CDMConnector)
+
+Sys.setenv("EUNOMIA_DATA_FOLDER" = here::here())
+downloadEunomiaData("GiBleed")
+```
+
+# `CDMConnector` + 基本的な操作
+
+![](https://raw.githubusercontent.com/darwin-eu/CDMConnector/refs/heads/main/man/figures/logo.png){fig-align="center"}
+
+[[CDMConnector]{.button}](https://darwin-eu.github.io/CDMConnector/)
+
+## `CDMConnector`
+
+データベース接続とデータアクセス
+
+```{r}
+library(CDMConnector)
+library(tidyverse)
+library(dbplyr)
+
+# データベースへの接続
+con <- DBI::dbConnect(duckdb::duckdb(), eunomiaDir("GiBleed"))
+
+# テーブル一覧を表示
+DBI::dbListTables(con)
+```
+
+## `CDMConnector`
+
+CDMオブジェクトの作成
+
+`cdmFromCon()`を使って、OMOP専用のオブジェクト形式にする
+
+```{r}
+cdm <- cdmFromCon(con, cdmSchema = "main", writeSchema = "main")
+cdm
+```
+
+## `cdm` オブジェクト
+
+`$`を使って各テーブルにアクセス可能
+
+```{r}
+cdm$person |> 
+  collect() |> 
+  glimpse()
+```
+
+## 基本的なデータ操作
+
+1975年以降生まれの男性の疾患分布
+
+```{r}
+cdm$person |>
+  filter(year_of_birth >= 1975, gender_source_value == "M") |> 
+  left_join(cdm$condition_occurrence, by = "person_id") |>
+  summarise(n = n(), .by = condition_concept_id) |>
+  left_join(cdm$concept |> select(concept_id, concept_name), by = c("condition_concept_id" = "concept_id")) |>
+  collect() |> 
+  arrange(desc(n))
+```
+
+## 可視化も！
+
+```{r}
+cdm$person |> 
+  summarize(n = n(), .by = c(year_of_birth, gender_concept_id)) |> 
+  mutate(sex = case_when(
+    gender_concept_id == 8532 ~ "Female",
+    gender_concept_id == 8507 ~ "Male"
+  )) |> 
+  collect() |> 
+  ggplot(aes(y = n, x = year_of_birth, fill = sex)) +
+  geom_col(position = "dodge")
+```
+
+::: {.callout-note}
+`tidyverse` スタイルのデータハンドリングが可能！
+:::
+
+# `OmopSketch`<br>データベースの概要をつかむ
+
+![](https://raw.githubusercontent.com/OHDSI/OmopSketch/main/man/figures/logo.png){fig-align="center"}
+
+[[OmopSketch]{.button}](https://ohdsi.github.io/OmopSketch/)
+
+## `OmopSketch`
+
+DB全体の概要をつかむ (tibble)
+
+```{r}
+library(OmopSketch)
+
+cdm |> 
+  summariseOmopSnapshot() |> 
+  tableOmopSnapshot(type = "tibble")
+```
+
+## `OmopSketch`
+
+`condition_occurrence`の概要をつかむ (flextable)
+
+```{r}
+cdm |> 
+  summariseClinicalRecords("condition_occurrence") |>
+  tableClinicalRecords(type = "flextable")
+```
+
+## `OmopSketch`
+
+`drug_exposure`の概要をつかむ (flextable)
+
+```{r}
+cdm |> 
+  summariseClinicalRecords("drug_exposure") |>
+  tableClinicalRecords(type = "flextable")
+```
+
+# `PatientProfiles`<br>患者特性の追加
+
+![](https://raw.githubusercontent.com/darwin-eu/PatientProfiles/main/man/figures/logo.png){fig-align="center"}
+
+[[PatientProfiles]{.button}](https://darwin-eu.github.io/PatientProfiles/)
+
+## `PatientProfiles`
+
+「気管支炎を有する患者」のコホートを設定
+
+```{r}
+cdm <- cdm |> 
+  generateConceptCohortSet(
+  name = "bronchitis",
+  conceptSet = list("any_bronchitis" = c(260139, 258780)), 
+  limit = "all", 
+  end = 0
+)
+
+cdm$bronchitis |> 
+  collect()
+```
+
+## `PatientProfiles`
+
+コホートに患者特性を追加
+
+```{r}
+#| eval: false
+library(PatientProfiles)
+
+# 生年月日、年齢、性別
+cdm$bronchitis |> 
+  addDateOfBirth() |> 
+  addSex() |> 
+  addAge()
+
+# index dateを起点とした過去/未来の観察期間
+cdm$bronchitis |> 
+  addPriorObservation() |> 
+  addFutureObservation()
+```
+
+::: {.callout-note}
+特に何か言うことはありません。簡単すぎる！
+:::
+
+# `IncidencePrevalence`<br>有病割合・罹患率の計算
+
+![](https://raw.githubusercontent.com/darwin-eu/IncidencePrevalence/main/man/figures/logo.png){fig-align="center"}
+
+[[IncidencePrevalence]{.button}](https://darwin-eu.github.io/IncidencePrevalence/)
+
+## `IncidencePrevalence`
+
+「分母」となるコホートの作成
+
+```{r}
+library(IncidencePrevalence)
+
+cdm <- cdm |> 
+  generateDenominatorCohortSet(
+    "denom", 
+    cohortDateRange = c(as.Date("2005-01-01"), as.Date(NA))
+  )
+```
+
+## `IncidencePrevalence`
+
+有病割合の算出
+
+```{r}
+cdm |> 
+  estimatePeriodPrevalence(
+    denominatorTable = "denom", 
+    outcomeTable = "bronchitis"
+  ) |> 
+  plotPrevalence()
+```
+
+## `IncidencePrevalence`
+
+罹患率の算出
+
+```{r}
+cdm |> 
+  estimateIncidence(
+    denominatorTable = "denom", 
+    outcomeTable = "bronchitis"
+  ) |> 
+  plotIncidence()
+```
+
+# `CohortSurvival`<br>生存時間分析
+
+![](https://raw.githubusercontent.com/darwin-eu/CohortSurvival/main/man/figures/logo.png){fig-align="center"}
+
+[[CohortSurvival]{.button}](https://darwin-eu-dev.github.io/CohortSurvival/)
+
+## `CohortSurvival`
+
+```{r}
+library(CohortSurvival)
+
+# 生存時間分析のためのサンプルデータ
+cdm <- mockMGUS2cdm()
+
+cdm |> 
+  estimateSingleEventSurvival(
+  targetCohortTable = "mgus_diagnosis",
+  outcomeCohortTable = "death_cohort"
+) |> 
+  plotSurvival()
+```
+
+## `CohortSurvival`
+
+```{r}
+cdm |> 
+  estimateSingleEventSurvival(
+    targetCohortTable = "mgus_diagnosis",
+    outcomeCohortTable = "death_cohort",
+    strata = list(c("age_group"))
+) |> 
+  plotSurvival(colour = "age_group")
+```
+
+## まとめ
+
+- **OMOP CDM**
+  - 観察研究・RWD研究のための共通データモデル
+  - 異なるデータベースを標準化し、再現性の高い分析を可能に
+- **解析用Rパッケージ**
+  - HADESを中心としたエコシステム
+  - OMOP解析に特化した便利なパッケージが多く存在
+
+## 学習リソース
+  
+- [The Book of OHDSI](https://ohdsi.github.io/TheBookOfOhdsi/)
+- [OHDSIの本(和訳版)](https://ohdsi.github.io/TheBookOfOhdsiInJapanese/)
+- [OMOP CDM Documentation](https://ohdsi.github.io/CommonDataModel/)
+- [HADES](https://ohdsi.github.io/Hades/)
+- [DARWIN EU](https://github.com/darwin-eu/)
+- [ATHENA](https://athena.ohdsi.org/)
+- [Prieto-Alhambra Group - University of Oxford](https://github.com/oxford-pharmacoepi)
+  - [Quarto Pub](https://dpa-pde-oxford.quarto.pub/)
+  - [Tidy R programming with the OMOP common data model](https://dpa-pde-oxford.quarto.pub/an-introduction-to-tidy-r-programming-with-the-omop-common-data-model/)
+
+## コミュニティ
+  
+- [OHDSI Japan](https://www.ohdsi-japan.org/)
+- [OHDSI Forums](https://forums.ohdsi.org/)
+- [PHUSE OSS Technology WG](https://advance.hub.phuse.global/wiki/spaces/WEL/pages/96468993/)
