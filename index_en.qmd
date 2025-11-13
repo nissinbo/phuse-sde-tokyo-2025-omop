@@ -1,0 +1,512 @@
+---
+title: "RWD Analysis Using Open Source Software"
+subtitle: "Introduction to OMOP CDM and R Packages for Analysis"
+format:
+  clean-revealjs:
+    embed-resources: true
+footer: "PHUSE SDE Japan 2025"
+author:
+  - name: " "
+    affiliations: PHUSE Japan Open-source Technology Working Group
+date: 2025-12-05
+execute: 
+  echo: true
+output-file: index.html
+lang: en
+---
+
+```{r}
+#| include: false
+options(tibble.print_min = 4)
+```
+
+## Slides Available Here
+
+:::: {.columns}
+
+::: {.column}
+English: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/en>
+
+![](images/slide_qr_english.png)
+:::
+
+::: {.column}
+Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
+
+![](images/slide_qr_japanese.png)
+:::
+
+::::
+
+# Introduction to OMOP CDM {background-color="#2C3E50"}
+
+## What is OMOP CDM?
+  
+### **O**bservational **M**edical **O**utcomes **P**artnership **C**ommon **D**ata **M**odel
+  
+- A standardized data model for unified analysis across diverse RWD sources
+- Enhances reproducibility through common schema and standardized vocabularies
+- Developed and maintained by the OHDSI community
+
+![](https://www.ohdsi.org/wp-content/uploads/2015/02/h243-ohdsi-logo-with-text.png){fig-align="center"}
+
+[[OHDSI]{.button}](https://www.ohdsi.org/)
+
+::: {.callout-note}
+In 2025, a [PHUSE Working Group](https://advance.hub.phuse.global/wiki/spaces/WEL/pages/96468993/) was established to promote OMOP adoption in the pharmaceutical industry
+:::
+
+## Key Features of OMOP CDM
+
+- **Advantages: Facilitates comparative studies across different data sources**
+  - Unified terminology through standardized vocabularies
+  - Designed with minimal tables necessary for observational research
+- **Challenges: Complexity of transformation process**
+  - Requires ETL processes specific to each data source
+  - Difficulty in mapping to standard terminologies
+
+## OMOP CDM Structure (v5.4)
+
+![](https://ohdsi.github.io/CommonDataModel/images/cdm54.png){fig-align="center" width="80%"}
+
+- **Clinical data**: Person, Observation Period, Visit Occurrence, ...
+- **Health system**: Location, Care Site, Provider
+- **Vocabularies**: Concept, Vocabulary, Concept Relationship, ...
+
+[[OMOP CDM]{.button}](https://ohdsi.github.io/CommonDataModel/)
+
+## Core Table: Person
+
+### Basic patient information and demographics
+
+| Field | Description |
+|-----------|------|
+| person_id | Patient ID |
+| gender_concept_id | Gender |
+| year_of_birth | Birth year |
+| race_concept_id | Race |
+| ethnicity_concept_id | Ethnicity |
+
+::: {.callout-tip}
+All clinical events are linked through `person_id`
+:::
+
+## Core Table: Visit Occurrence
+
+### Healthcare facility visit and admission information
+
+| Field | Description |
+|-----------|------|
+| visit_occurrence_id | Visit identifier |
+| person_id | Patient ID |
+| visit_concept_id | Visit type (inpatient/outpatient/emergency) |
+| visit_start_date | Visit start date |
+| visit_end_date | Visit end date |
+  
+## Core Table: Condition Occurrence
+  
+### Disease and symptom diagnosis information
+
+| Field | Description |
+|-----------|------|
+| condition_occurrence_id | Diagnosis identifier |
+| person_id | Patient ID |
+| condition_concept_id | Standard concept ID for condition |
+| condition_start_date | Diagnosis start date |
+| condition_type_concept_id | Record source (EHR/claims) |
+
+## Core Table: Drug Exposure
+  
+### Drug exposure information
+
+| Field | Description |
+|-----------|------|
+| drug_exposure_id | Drug exposure identifier |
+| person_id | Patient ID |
+| drug_concept_id | Standard concept ID for drug |
+| drug_exposure_start_date | Exposure start date |
+| drug_exposure_end_date | Exposure end date |
+
+## Code Mapping
+
+In OMOP, various codes are often mapped to standard concepts (not mandatory)
+  
+- **Standard concepts**: Defined by SNOMED CT , RxNorm, etc.
+- **Non-standard concepts**: Codes in source data such as ICD10, LOINC
+- Concepts can be searched using [ATHENA](https://athena.ohdsi.org/) web tool
+
+![](https://ohdsi.github.io/TheBookOfOhdsi/images/StandardizedVocabularies/concept.png){fig-align="center"}
+
+::: {.callout-tip}
+## Example: Hypertension
+- **Standard**: SNOMED 38341003
+- **Non-standard**: ICD10 I10, MeSH D006973
+:::
+
+# Analyzing OMOP with R {background-color="#2C3E50"}
+
+## What is HADES?
+
+### **H**ealth **A**nalytics **D**ata-to-**E**vidence **S**uite
+
+- A collection of R packages specialized for OMOP CDM data analysis
+- High interoperability (works seamlessly when using HADES packages together)
+- Actively developed by two organizations: OHDSI and DARWIN EU
+
+![](https://ohdsi.github.io/Hades/images/banner.png)
+
+[[HADES]{.button}](https://ohdsi.github.io/Hades/index.html)
+[[OHDSI]{.button}](https://github.com/OHDSI/)
+[[DARWIN EU]{.button}](https://github.com/darwin-eu/)
+
+## HADES Package List
+
+![](images/hades_packages.png)
+
+[[HADES Packages]{.button}](https://ohdsi.github.io/Hades/index.html)
+
+As of December 2025, 41 packages are registered in HADES!
+
+## Example Workflow Using HADES
+
+### End-to-end analysis workflow is achievable
+
+```{mermaid}
+%%| echo: false
+%%{init: {'theme':'base', 'themeVariables': {'fontSize':'30px'}}}%%
+graph LR
+    subgraph DataQuality["Data Quality"]
+    B1[DataQualityDashboard]
+    B2[Achilles]
+    end
+    
+    subgraph CohortDefinition["Cohort Definition"]
+    C1[Capr]
+    C2[CohortGenerator]
+    end
+    
+    subgraph CohortDiagnostics["Cohort Diagnostics"]
+    D1[CohortDiagnostics]
+    end
+    
+    subgraph PatientCharacteristics["Patient Characteristics"]
+    E1[FeatureExtraction]
+    E2[Characterization]
+    end
+    
+    subgraph Estimation["Estimation"]
+    F1[CohortMethod]
+    F2[EvidenceSynthesis]
+    end
+    
+    A[OMOP Database] --> B1 & B2
+    A --> C1 & C2
+    C1 & C2 --> D1
+    D1 --> E1 & E2
+    E1 --> F1 & F2
+    
+    style DataQuality fill:#FCE4EC,stroke:#C2185B,color:#000
+    style CohortDefinition fill:#E8F5E9,stroke:#388E3C,color:#000
+    style CohortDiagnostics fill:#FFF3E0,stroke:#F57C00,color:#000
+    style PatientCharacteristics fill:#F3E5F5,stroke:#7B1FA2,color:#000
+    style Estimation fill:#FFF9C4,stroke:#F9A825,color:#000
+    
+    style A fill:#E3F2FD,stroke:#1976D2,color:#000
+    style B1 fill:#FFEBEE,stroke:#C62828,color:#000
+    style B2 fill:#FFEBEE,stroke:#C62828,color:#000
+    style C1 fill:#C8E6C9,stroke:#2E7D32,color:#000
+    style C2 fill:#C8E6C9,stroke:#2E7D32,color:#000
+    style D1 fill:#FFE0B2,stroke:#EF6C00,color:#000
+    style E1 fill:#E1BEE7,stroke:#6A1B9A,color:#000
+    style E2 fill:#E1BEE7,stroke:#6A1B9A,color:#000
+    style F1 fill:#FFF59D,stroke:#F57F17,color:#000
+    style F2 fill:#FFF59D,stroke:#F57F17,color:#000
+```
+
+# Let's Try It Out! 😀 {background-color="#2C3E50"}
+
+## Setup
+
+Install R packages
+
+```{r}
+#| eval: false
+install.packages(c("duckdb", "here", "CDMConnector", "OmopSketch", 
+                   "PatientProfiles", "IncidencePrevalence", "CohortSurvival"))
+```
+
+Download sample data
+
+```{r}
+library(CDMConnector)
+
+Sys.setenv("EUNOMIA_DATA_FOLDER" = here::here())
+downloadEunomiaData("GiBleed")
+```
+
+# `CDMConnector` + Basic Operations
+
+![](https://raw.githubusercontent.com/darwin-eu/CDMConnector/refs/heads/main/man/figures/logo.png){fig-align="center"}
+
+[[CDMConnector]{.button}](https://darwin-eu.github.io/CDMConnector/)
+
+## `CDMConnector`
+
+Database connection and data access
+
+```{r}
+library(CDMConnector)
+library(tidyverse)
+library(dbplyr)
+
+# Connect to database
+con <- DBI::dbConnect(duckdb::duckdb(), eunomiaDir("GiBleed"))
+
+# List tables
+DBI::dbListTables(con)
+```
+
+## `CDMConnector`
+
+Create CDM object
+
+Use `cdmFromCon()` to create an OMOP-specific object format
+
+```{r}
+cdm <- cdmFromCon(con, cdmSchema = "main", writeSchema = "main")
+cdm
+```
+
+## `cdm` Object
+
+Access each table using `$`
+
+```{r}
+cdm$person |> 
+  collect() |> 
+  glimpse()
+```
+
+## Basic Data Operations
+
+Distribution of conditions among males born after 1975
+
+```{r}
+cdm$person |>
+  filter(year_of_birth >= 1975, gender_source_value == "M") |> 
+  left_join(cdm$condition_occurrence, by = "person_id") |>
+  summarise(n = n(), .by = condition_concept_id) |>
+  left_join(cdm$concept |> select(concept_id, concept_name), by = c("condition_concept_id" = "concept_id")) |>
+  collect() |> 
+  arrange(desc(n))
+```
+
+## Visualization Too!
+
+```{r}
+cdm$person |> 
+  summarize(n = n(), .by = c(year_of_birth, gender_concept_id)) |> 
+  mutate(sex = case_when(
+    gender_concept_id == 8532 ~ "Female",
+    gender_concept_id == 8507 ~ "Male"
+  )) |> 
+  collect() |> 
+  ggplot(aes(y = n, x = year_of_birth, fill = sex)) +
+  geom_col(position = "dodge")
+```
+
+::: {.callout-note}
+`tidyverse` style data handling is possible!
+:::
+
+# `OmopSketch`<br>Understanding Database Overview
+
+![](https://raw.githubusercontent.com/OHDSI/OmopSketch/main/man/figures/logo.png){fig-align="center"}
+
+[[OmopSketch]{.button}](https://ohdsi.github.io/OmopSketch/)
+
+## `OmopSketch`
+
+Get an overview of the entire database (tibble)
+
+```{r}
+library(OmopSketch)
+
+cdm |> 
+  summariseOmopSnapshot() |> 
+  tableOmopSnapshot(type = "tibble")
+```
+
+## `OmopSketch`
+
+Get an overview of `condition_occurrence` (flextable)
+
+```{r}
+cdm |> 
+  summariseClinicalRecords("condition_occurrence") |>
+  tableClinicalRecords(type = "flextable")
+```
+
+## `OmopSketch`
+
+Get an overview of `drug_exposure` (flextable)
+
+```{r}
+cdm |> 
+  summariseClinicalRecords("drug_exposure") |>
+  tableClinicalRecords(type = "flextable")
+```
+
+# `PatientProfiles`<br>Adding Patient Characteristics
+
+![](https://raw.githubusercontent.com/darwin-eu/PatientProfiles/main/man/figures/logo.png){fig-align="center"}
+
+[[PatientProfiles]{.button}](https://darwin-eu.github.io/PatientProfiles/)
+
+## `PatientProfiles`
+
+Define a cohort of "patients with bronchitis"
+
+```{r}
+cdm <- cdm |> 
+  generateConceptCohortSet(
+  name = "bronchitis",
+  conceptSet = list("any_bronchitis" = c(260139, 258780)), 
+  limit = "all", 
+  end = 0
+)
+
+cdm$bronchitis |> 
+  collect()
+```
+
+## `PatientProfiles`
+
+Add patient characteristics to cohort
+
+```{r}
+#| eval: false
+library(PatientProfiles)
+
+# Date of birth, age, sex
+cdm$bronchitis |> 
+  addDateOfBirth() |> 
+  addSex() |> 
+  addAge()
+
+# Prior/future observation periods from index date
+cdm$bronchitis |> 
+  addPriorObservation() |> 
+  addFutureObservation()
+```
+
+::: {.callout-note}
+Nothing much to say here. It's incredibly simple!
+:::
+
+# `IncidencePrevalence`<br>Calculating Prevalence and Incidence
+
+![](https://raw.githubusercontent.com/darwin-eu/IncidencePrevalence/main/man/figures/logo.png){fig-align="center"}
+
+[[IncidencePrevalence]{.button}](https://darwin-eu.github.io/IncidencePrevalence/)
+
+## `IncidencePrevalence`
+
+Create "denominator" cohort
+
+```{r}
+library(IncidencePrevalence)
+
+cdm <- cdm |> 
+  generateDenominatorCohortSet(
+    "denom", 
+    cohortDateRange = c(as.Date("2005-01-01"), as.Date(NA))
+  )
+```
+
+## `IncidencePrevalence`
+
+Calculate prevalence
+
+```{r}
+cdm |> 
+  estimatePeriodPrevalence(
+    denominatorTable = "denom", 
+    outcomeTable = "bronchitis"
+  ) |> 
+  plotPrevalence()
+```
+
+## `IncidencePrevalence`
+
+Calculate incidence
+
+```{r}
+cdm |> 
+  estimateIncidence(
+    denominatorTable = "denom", 
+    outcomeTable = "bronchitis"
+  ) |> 
+  plotIncidence()
+```
+
+# `CohortSurvival`<br>Survival Analysis
+
+![](https://raw.githubusercontent.com/darwin-eu/CohortSurvival/main/man/figures/logo.png){fig-align="center"}
+
+[[CohortSurvival]{.button}](https://darwin-eu-dev.github.io/CohortSurvival/)
+
+## `CohortSurvival`
+
+```{r}
+library(CohortSurvival)
+
+# Sample data for survival analysis
+cdm <- mockMGUS2cdm()
+
+cdm |> 
+  estimateSingleEventSurvival(
+  targetCohortTable = "mgus_diagnosis",
+  outcomeCohortTable = "death_cohort"
+) |> 
+  plotSurvival()
+```
+
+## `CohortSurvival`
+
+```{r}
+cdm |> 
+  estimateSingleEventSurvival(
+    targetCohortTable = "mgus_diagnosis",
+    outcomeCohortTable = "death_cohort",
+    strata = list(c("age_group"))
+) |> 
+  plotSurvival(colour = "age_group")
+```
+
+## Summary
+
+- **OMOP CDM**
+  - Common data model for observational and RWD research
+  - Standardizes different databases to enable reproducible analysis
+- **R Packages for Analysis**
+  - Ecosystem centered around HADES
+  - Many convenient packages specialized for OMOP analysis
+
+## Learning Resources
+  
+- [The Book of OHDSI](https://ohdsi.github.io/TheBookOfOhdsi/)
+- [The Book of OHDSI (Japanese translation)](https://ohdsi.github.io/TheBookOfOhdsiInJapanese/)
+- [OMOP CDM Documentation](https://ohdsi.github.io/CommonDataModel/)
+- [HADES](https://ohdsi.github.io/Hades/)
+- [DARWIN EU](https://github.com/darwin-eu/)
+- [ATHENA](https://athena.ohdsi.org/)
+- [Prieto-Alhambra Group - University of Oxford](https://github.com/oxford-pharmacoepi)
+  - [Quarto Pub](https://dpa-pde-oxford.quarto.pub/)
+  - [Tidy R programming with the OMOP common data model](https://dpa-pde-oxford.quarto.pub/an-introduction-to-tidy-r-programming-with-the-omop-common-data-model/)
+
+## Community
+  
+- [OHDSI Japan](https://www.ohdsi-japan.org/)
+- [OHDSI Forums](https://forums.ohdsi.org/)
+- [PHUSE OSS Technology WG](https://advance.hub.phuse.global/wiki/spaces/WEL/pages/96468993/)
