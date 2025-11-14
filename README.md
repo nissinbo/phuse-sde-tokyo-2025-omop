@@ -1,0 +1,2 @@
+- https://nissinbo.github.io/phuse-sde-tokyo-2025-omop/en/
+- https://nissinbo.github.io/phuse-sde-tokyo-2025-omop/ja/
