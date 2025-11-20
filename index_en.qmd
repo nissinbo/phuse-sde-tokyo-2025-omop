@@ -44,7 +44,7 @@ Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
   
 ### **O**bservational **M**edical **O**utcomes **P**artnership **C**ommon **D**ata **M**odel
   
-- A standardized data model for unified analysis across diverse RWD sources
+- Standardized data model for unified RWD analysis
 - Enhances reproducibility through common schema and standardized vocabularies
 - Developed and maintained by the OHDSI community
 
@@ -53,7 +53,7 @@ Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
 [[OHDSI]{.button}](https://www.ohdsi.org/)
 
 ::: {.callout-note}
-In 2025, a [PHUSE Working Group](https://advance.hub.phuse.global/wiki/spaces/WEL/pages/96468993/) was established to promote OMOP adoption in the pharmaceutical industry
+In 2025, [PHUSE Working Group](https://advance.hub.phuse.global/wiki/spaces/WEL/pages/96468993/) was established to promote OMOP adoption
 :::
 
 ## Key Features of OMOP CDM
@@ -64,6 +64,8 @@ In 2025, a [PHUSE Working Group](https://advance.hub.phuse.global/wiki/spaces/WE
 - **Challenges: Complexity of transformation process**
   - Requires ETL processes specific to each data source
   - Difficulty in mapping to standard terminologies
+
+![](https://www.ohdsi.org/wp-content/uploads/2014/07/Why-CDM.png){fig-align="center"}
 
 ## OMOP CDM Structure (v5.4)
 
@@ -129,7 +131,7 @@ All clinical events are linked through `person_id`
 
 ## Code Mapping
 
-In OMOP, various codes are often mapped to standard concepts (not mandatory)
+Various codes are often mapped to standard concepts (not mandatory)
   
 - **Standard concepts**: Defined by SNOMED CT , RxNorm, etc.
 - **Non-standard concepts**: Codes in source data such as ICD10, LOINC
@@ -244,7 +246,7 @@ Sys.setenv("EUNOMIA_DATA_FOLDER" = here::here())
 downloadEunomiaData("GiBleed")
 ```
 
-# `CDMConnector` + Basic Operations
+# `CDMConnector` + Basics
 
 ![](https://raw.githubusercontent.com/darwin-eu/CDMConnector/refs/heads/main/man/figures/logo.png){fig-align="center"}
 

@@ -63,7 +63,9 @@ Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
   - 観察研究に必要な最小限のテーブルで設計
 - **課題: 変換工程の複雑さ**
   - データソースごとにETLプロセスが必要
-  - 標準用語集へのマッピングの難易度
+  - 標準ボキャブラリへのマッピングの難易度
+
+![](https://www.ohdsi.org/wp-content/uploads/2014/07/Why-CDM.png){fig-align="center"}
 
 ## OMOP CDMの構造 (v5.4)
 
@@ -129,7 +131,7 @@ Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
 
 ## コードのマッピング
 
-OMOPでは、各種コードを標準コンセプトにマッピングすることが多い (必須ではない)
+各種コードを標準コンセプトにマッピングすることが多い (必須ではない)
   
 - **標準コンセプト**: SNOMED CT(疾患)やRxNorm(薬剤)などによって定義
 - **非標準コンセプト**: ICD10やLOINCなど、元データで使用されるコード
