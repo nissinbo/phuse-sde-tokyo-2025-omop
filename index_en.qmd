@@ -25,13 +25,13 @@ options(tibble.print_min = 4)
 :::: {.columns}
 
 ::: {.column}
-English: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/en>
+English: <https://nissinbo.github.io/phuse-sde-tokyo-2025-omop/en>
 
 ![](images/slide_qr_english.png)
 :::
 
 ::: {.column}
-Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
+Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-omop/ja>
 
 ![](images/slide_qr_japanese.png)
 :::
@@ -63,7 +63,7 @@ In 2025, [PHUSE Working Group](https://advance.hub.phuse.global/wiki/spaces/WEL/
   - Designed with minimal tables necessary for observational research
 - **Challenges: Complexity of transformation process**
   - Requires ETL processes specific to each data source
-  - Difficulty in mapping to standard terminologies
+  - Difficulty in mapping to standard vocabularies
 
 ![](https://www.ohdsi.org/wp-content/uploads/2014/07/Why-CDM.png){fig-align="center"}
 

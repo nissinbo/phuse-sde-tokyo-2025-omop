@@ -25,13 +25,13 @@ options(tibble.print_min = 4)
 :::: {.columns}
 
 ::: {.column}
-English: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/en>
+English: <https://nissinbo.github.io/phuse-sde-tokyo-2025-omop/en>
 
 ![](images/slide_qr_english.png)
 :::
 
 ::: {.column}
-Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-ost-omop/ja>
+Japanese: <https://nissinbo.github.io/phuse-sde-tokyo-2025-omop/ja>
 
 ![](images/slide_qr_japanese.png)
 :::
